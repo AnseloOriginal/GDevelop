@@ -1,0 +1,4 @@
+.frameContainer::after {
+    content: ''; /* Ensure there is content for the scroll to be triggered */
+    display: block;
+}

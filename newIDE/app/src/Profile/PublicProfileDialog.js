@@ -20,6 +20,7 @@ type Props = {|
   onGameTemplateOpen?: (
     privateAssetPackListingData: PrivateGameTemplateListingData
   ) => void,
+  onGameOpen?: (gameId: string) => void,
 |};
 
 const PublicProfileDialog = ({
@@ -27,6 +28,7 @@ const PublicProfileDialog = ({
   onClose,
   onAssetPackOpen,
   onGameTemplateOpen,
+  onGameOpen,
 }: Props) => {
   const callbacks = React.useMemo(
     () => ({
@@ -44,8 +46,15 @@ const PublicProfileDialog = ({
             }
           }
         : null,
+      openGame: onGameOpen
+        ? (data: GdGamesMessageEventData) => {
+            if (data.gameId) {
+              onGameOpen(data.gameId);
+            }
+          }
+        : null,
     }),
-    [onAssetPackOpen, onGameTemplateOpen]
+    [onAssetPackOpen, onGameTemplateOpen, onGameOpen]
   );
 
   const onMessageReceived = React.useCallback(

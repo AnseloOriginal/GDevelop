@@ -15,6 +15,7 @@ export type GdGamesMessageEventData = $ReadOnly<{
   id?: string | any,
   privateAssetPackListingData?: PrivateAssetPackListingData,
   privateGameTemplateListingData?: PrivateGameTemplateListingData,
+  gameId?: string,
 }>;
 
 type Props = {|
