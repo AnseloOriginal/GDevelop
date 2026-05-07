@@ -18,15 +18,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn'
-
+          # We skip the default cache because your lockfiles are nested
+          
       - name: Build Game Engine (GDJS)
-        run: cd GDJS && yarn && yarn build
+        working-directory: ./GDJS
+        run: |
+          yarn install
+          yarn build
 
       - name: Build IDE (newIDE)
+        working-directory: ./newIDE/app
         run: |
-          cd newIDE/app
-          yarn
+          yarn install
           yarn build
         env:
           PUBLIC_URL: .
@@ -34,5 +37,5 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: newIDE/app/build # The folder the build script creates
-          branch: gh-pages # The branch the build will be pushed to
+          folder: newIDE/app/build
+          branch: gh-pages
