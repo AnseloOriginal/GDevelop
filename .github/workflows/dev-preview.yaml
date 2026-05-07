@@ -20,15 +20,13 @@ jobs:
           node-version: 20
           cache: 'yarn'
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
       - name: Build Game Engine (GDJS)
-        run: cd GDJS && yarn build
+        run: cd GDJS && yarn && yarn build
 
       - name: Build IDE (newIDE)
         run: |
           cd newIDE/app
+          yarn
           yarn build
         env:
           PUBLIC_URL: .
