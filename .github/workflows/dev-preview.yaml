@@ -39,7 +39,8 @@ jobs:
         working-directory: newIDE/app
         env:
           CI: false
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=6144
+          GENERATE_SOURCEMAP: false   # <-- add this line
         run: npm run build
 
       - name: Configure GitHub Pages
