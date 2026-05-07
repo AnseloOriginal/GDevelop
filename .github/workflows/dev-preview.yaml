@@ -2,6 +2,7 @@ name: Build & Deploy GDevelop newIDE to GitHub Pages
 
 on:
   workflow_dispatch: # Triggered manually from the Actions tab on dev-preview
+  push: { branches: dev-preview }
 
 permissions:
   contents: read
