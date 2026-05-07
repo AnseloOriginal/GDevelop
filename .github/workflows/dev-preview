@@ -1,0 +1,40 @@
+name: Build and Deploy Preview
+on:
+  push:
+    branches:
+      - dev-preview
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Game Engine (GDJS)
+        run: cd GDJS && yarn build
+
+      - name: Build IDE (newIDE)
+        run: |
+          cd newIDE/app
+          yarn build
+        env:
+          PUBLIC_URL: .
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: newIDE/app/build # The folder the build script creates
+          branch: gh-pages # The branch the build will be pushed to
