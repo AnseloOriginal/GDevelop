@@ -51,7 +51,9 @@ module.exports = {
       .addParameter('number', _('Duration of the transition'), '', true)
       .setDefaultValue(`1`)
       .getCodeExtraInformation()
+      .addIncludeFile('Extensions/SceneTransition/scenetransitiontools.js') // ← this is missing
       .setFunctionName('gdjs.SceneTransition.changeSceneWithTransition');
+  
     return extension;
   },
   runExtensionSanityTests: function (gd, extension) {
