@@ -27,7 +27,7 @@ module.exports = {
       )
       .setShortDescription(
         'Change scenes with customizable transitionss.'
-      );
+      )..setCategory('Scene');
     extension
       .addInstructionOrExpressionGroupMetadata(_('Scene Transition'))
       .setIcon('CppPlatform/Extensions/topdownmovementicon.png');
@@ -52,5 +52,9 @@ module.exports = {
       .setDefaultValue(`1`)
       .getCodeExtraInformation()
       .setFunctionName('gdjs.SceneTransition.changeSceneWithTransition');
-    }
+    return extension;
+  },
+  runExtensionSanityTests: function (gd, extension) {
+    return [];
+  },
 }
