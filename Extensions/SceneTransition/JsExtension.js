@@ -26,8 +26,8 @@ module.exports = {
         'MIT'
       )
       .setShortDescription(
-        'Change scenes with customizable transitionss.'
-      )..setCategory('Scene');
+        'Change scenes with customizable transitions.'
+      ).setCategory('Scene');
     extension
       .addInstructionOrExpressionGroupMetadata(_('Scene Transition'))
       .setIcon('CppPlatform/Extensions/topdownmovementicon.png');
@@ -45,7 +45,7 @@ module.exports = {
         'res/actions/saveDown.svg',
         'res/actions/saveDown.svg'
       )
-      .addCodeOnlyParameter('currentScene', '')
+      .addParameter('sceneName', '')
       .addParameter('string', _('Type of Transition'), '', false)
       .setDefaultValue(`Swipe Left`)
       .addParameter('number', _('Duration of the transition'), '', true)
