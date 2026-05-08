@@ -1,6 +1,7 @@
-gdjs.SceneTransition = {
-  changeSceneWithTransition: function(runtimeScene, sceneName, transitionType, duration) {
-    // implementation goes here
-    console.log("Hi")
-  }
-};
+namespace gdjs {
+  export const SceneTransition = {
+    changeSceneWithTransition: function() {
+      console.log("Scene Transition")
+    }
+  };
+}

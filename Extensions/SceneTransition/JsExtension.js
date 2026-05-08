@@ -34,25 +34,24 @@ module.exports = {
 
 
        extension
-      .addAction(
-        'ChangeSceneWithTransition',
-        _('Change Scene with transition'),
-        _(
-          'Change the scene to a new scene with a transition.'
-        ),
-        _('Change Scene to _PARAM1_ using _PARAM2_ transition (Duration _PARAM3_)'),
-        _('Scene'),
-        'res/actions/saveDown.svg',
-        'res/actions/saveDown.svg'
-      )
-      .addParameter('sceneName', '')
-      .addParameter('string', _('Type of Transition'), '', false)
-      .setDefaultValue(`Swipe Left`)
-      .addParameter('number', _('Duration of the transition'), '', true)
-      .setDefaultValue(`1`)
-      .getCodeExtraInformation()
-      .addIncludeFile('Extensions/SceneTransition/scenetransitiontools.js') // ← this is missing
-      .setFunctionName('gdjs.SceneTransition.changeSceneWithTransition');
+        .addAction(
+          'ChangeSceneWithTransition',
+          _('Change Scene with transition'),
+          _('Change the scene to a new scene with a transition.'),
+          _('Change Scene to _PARAM1_ using _PARAM2_ transition (Duration _PARAM3_)'),
+          _('Scene'),
+          'res/actions/saveDown.svg',
+          'res/actions/saveDown.svg'
+        )
+        .addCodeOnlyParameter('currentScene', '')                             // PARAM0
+        .addParameter('sceneName', _('Name of the new scene'), '', false)    // PARAM1
+        .addParameter('string', _('Type of Transition'), '', false)          // PARAM2
+        .setDefaultValue('Swipe Left')
+        .addParameter('number', _('Duration of the transition'), '', true)   // PARAM3
+        .setDefaultValue('1')
+        .getCodeExtraInformation()
+        .setIncludeFile('Extensions/SceneTransition/scenetransitiontools.js') // ← fix
+        .setFunctionName('gdjs.SceneTransition.changeSceneWithTransition');
   
     return extension;
   },
