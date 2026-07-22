@@ -60,6 +60,7 @@ type CommandHandlers = {|
   onCloseProject: () => Promise<void>,
   onReloadProject: () => Promise<void>,
   onExportGame: () => void,
+  onExportHtml5External: () => void | Promise<void>,
   onInviteCollaborators: () => void,
   onOpenLayout: string => void,
   onOpenExternalEvents: string => void,
@@ -70,6 +71,9 @@ type CommandHandlers = {|
   onRestartInGameEditor: (reason: string) => void,
   onOpenGlobalSearch: () => void,
   onOpenMemoryTrackerRegistry: () => void,
+  onImportExtension: () => Promise<void>,
+  canInstallCliInPath: boolean,
+  onInstallCliInPath: () => void | Promise<void>,
 |};
 
 const useMainFrameCommands = (handlers: CommandHandlers) => {
@@ -159,6 +163,10 @@ const useMainFrameCommands = (handlers: CommandHandlers) => {
     handler: handlers.onExportGame,
   });
 
+  useCommand('EXPORT_HTML5_EXTERNAL', !!handlers.project, {
+    handler: handlers.onExportHtml5External,
+  });
+
   useCommand('INVITE_COLLABORATORS', !!handlers.project, {
     handler: handlers.onInviteCollaborators,
   });
@@ -171,6 +179,10 @@ const useMainFrameCommands = (handlers: CommandHandlers) => {
     handler: handlers.onOpenGlobalSearch,
   });
 
+  useCommand('IMPORT_EXTENSION', !!handlers.project, {
+    handler: handlers.onImportExtension,
+  });
+
   const onRestartInGameEditor = handlers.onRestartInGameEditor;
   useCommand('RESTART_IN_GAME_EDITOR', true, {
     handler: React.useCallback(
@@ -181,6 +193,10 @@ const useMainFrameCommands = (handlers: CommandHandlers) => {
 
   useCommand('OPEN_MEMORY_TRACKER_REGISTRY', true, {
     handler: handlers.onOpenMemoryTrackerRegistry,
+  });
+
+  useCommand('INSTALL_CLI_IN_PATH', handlers.canInstallCliInPath, {
+    handler: handlers.onInstallCliInPath,
   });
 
   useCommandWithOptions('OPEN_LAYOUT', !!handlers.project, {

@@ -3,8 +3,8 @@ import { Trans } from '@lingui/macro';
 import * as React from 'react';
 import EventsBasedBehaviorEditor from './EventsBasedBehaviorEditor';
 import {
-  EventsBasedBehaviorPropertiesEditor,
-  type EventsBasedBehaviorPropertiesEditorInterface,
+  EventsBasedBehaviorOrObjectPropertiesEditor,
+  type EventsBasedBehaviorOrObjectPropertiesEditorInterface,
 } from './EventsBasedBehaviorOrObjectPropertiesEditor';
 import Background from '../../UI/Background';
 import { type UnsavedChanges } from '../../MainFrame/UnsavedChangesContext';
@@ -40,12 +40,16 @@ type Props = {|
   onEventsBasedObjectChildrenEdited: (
     eventsBasedObject: gdEventsBasedObject
   ) => void,
+  onWillInstallExtension: (extensionNames: Array<string>) => void,
+  onExtensionInstalled: (extensionNames: Array<string>) => void,
+  shouldHideAddPropertyButton?: boolean,
 |};
 
 export type EventsBasedBehaviorOrObjectEditorInterface = {|
   forceUpdateProperties: () => void,
   scrollToConfiguration: () => void,
   scrollToProperty: (propertyName: string, isSharedProperties: boolean) => void,
+  focusOnProperty: (propertyName: string, isSharedProperties: boolean) => void,
 |};
 
 export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
@@ -69,6 +73,9 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
       onFocusProperty,
       onOpenCustomObjectEditor,
       onEventsBasedObjectChildrenEdited,
+      onWillInstallExtension,
+      onExtensionInstalled,
+      shouldHideAddPropertyButton,
     }: Props,
     ref
   ) => {
@@ -85,10 +92,10 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
     );
 
     const scrollView = React.useRef<?ScrollViewInterface>(null);
-    const propertiesEditor = React.useRef<?EventsBasedBehaviorPropertiesEditorInterface>(
+    const propertiesEditor = React.useRef<?EventsBasedBehaviorOrObjectPropertiesEditorInterface>(
       null
     );
-    const scenePropertiesEditor = React.useRef<?EventsBasedBehaviorPropertiesEditorInterface>(
+    const scenePropertiesEditor = React.useRef<?EventsBasedBehaviorOrObjectPropertiesEditorInterface>(
       null
     );
 
@@ -121,6 +128,17 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
         }
         if (scenePropertiesEditor.current) {
           scenePropertiesEditor.current.forceUpdate();
+        }
+      },
+      focusOnProperty: (propertyName: string, isSharedProperties: boolean) => {
+        if (isSharedProperties) {
+          if (scenePropertiesEditor.current) {
+            scenePropertiesEditor.current.focusOnProperty(propertyName);
+          }
+        } else {
+          if (propertiesEditor.current) {
+            propertiesEditor.current.focusOnProperty(propertyName);
+          }
         }
       },
       scrollToConfiguration: () => {
@@ -204,7 +222,7 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
                   )}
                 </Text>
                 {eventsBasedEntity && (
-                  <EventsBasedBehaviorPropertiesEditor
+                  <EventsBasedBehaviorOrObjectPropertiesEditor
                     ref={propertiesEditor}
                     project={project}
                     projectScopedContainersAccessor={
@@ -226,6 +244,8 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
                     }
                     onPropertyTypeChanged={onPropertyTypeChanged}
                     onEventsFunctionsAdded={onEventsFunctionsAdded}
+                    onWillInstallExtension={onWillInstallExtension}
+                    onExtensionInstalled={onExtensionInstalled}
                   />
                 )}
                 {eventsBasedBehavior && (
@@ -234,7 +254,7 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
                   </Text>
                 )}
                 {eventsBasedBehavior && (
-                  <EventsBasedBehaviorPropertiesEditor
+                  <EventsBasedBehaviorOrObjectPropertiesEditor
                     ref={scenePropertiesEditor}
                     isSharedProperties
                     project={project}
@@ -257,13 +277,15 @@ export const EventsBasedBehaviorOrObjectEditor: React.ComponentType<{
                     }
                     onPropertyTypeChanged={onPropertyTypeChanged}
                     onEventsFunctionsAdded={onEventsFunctionsAdded}
+                    onWillInstallExtension={onWillInstallExtension}
+                    onExtensionInstalled={onExtensionInstalled}
                   />
                 )}
               </ColumnStackLayout>
             </Container>
           </Column>
         </ScrollView>
-        {windowSize === 'small' && (
+        {windowSize === 'small' && !shouldHideAddPropertyButton && (
           <Column>
             <Line noMargin justifyContent="flex-end" expand>
               <RaisedButton

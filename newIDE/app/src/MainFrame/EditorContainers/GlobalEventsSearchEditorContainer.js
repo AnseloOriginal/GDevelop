@@ -3,11 +3,14 @@ import * as React from 'react';
 import type {
   RenderEditorContainerProps,
   RenderEditorContainerPropsWithRef,
+} from './BaseEditor';
+import type {
   SceneEventsOutsideEditorChanges,
   InstancesOutsideEditorChanges,
   ObjectsOutsideEditorChanges,
   ObjectGroupsOutsideEditorChanges,
-} from './BaseEditor';
+  WillDeleteObjectChanges,
+} from '../../EditorFunctions/OutsideEditorChanges';
 import { type ObjectWithContext } from '../../ObjectsList/EnumerateObjects';
 import { type HotReloadSteps } from '../../EmbeddedGame/EmbeddedGameFrame';
 import {
@@ -54,11 +57,18 @@ export class GlobalEventsSearchEditorContainer extends React.Component<RenderEdi
     }
   }
 
-  onEventsBasedObjectChildrenEdited() {
+  onEventsBasedObjectChildrenEdited(
+    eventsBasedObject: gdEventsBasedObject,
+    options?: {| editedObject?: ?gdObject, hasResourceChanged?: boolean |}
+  ) {
     // Nothing to do.
   }
 
-  onSceneObjectEdited(scene: gdLayout, objectWithContext: ObjectWithContext) {
+  onSceneObjectEdited(
+    scene: gdLayout,
+    objectWithContext: ObjectWithContext,
+    hasResourceChanged?: boolean
+  ) {
     // Nothing to do.
   }
 
@@ -83,6 +93,10 @@ export class GlobalEventsSearchEditorContainer extends React.Component<RenderEdi
   }
 
   onObjectsModifiedOutsideEditor(changes: ObjectsOutsideEditorChanges) {
+    // Nothing to do.
+  }
+
+  onWillDeleteObject(changes: WillDeleteObjectChanges) {
     // Nothing to do.
   }
 

@@ -6,11 +6,14 @@ import { sendEventsExtractedAsFunction } from '../../Utils/Analytics/EventSender
 import {
   type RenderEditorContainerProps,
   type RenderEditorContainerPropsWithRef,
+} from './BaseEditor';
+import {
   type SceneEventsOutsideEditorChanges,
   type InstancesOutsideEditorChanges,
   type ObjectsOutsideEditorChanges,
   type ObjectGroupsOutsideEditorChanges,
-} from './BaseEditor';
+  type WillDeleteObjectChanges,
+} from '../../EditorFunctions/OutsideEditorChanges';
 import { ProjectScopedContainersAccessor } from '../../InstructionOrExpression/EventsScope';
 import { type ObjectWithContext } from '../../ObjectsList/EnumerateObjects';
 import {
@@ -18,6 +21,7 @@ import {
   type HotReloadSteps,
 } from '../../EmbeddedGame/EmbeddedGameFrame';
 import type { SearchFilterParams } from '../../Utils/Search';
+import { type EventsScope } from '../../InstructionOrExpression/EventsScope';
 
 export class EventsEditorContainer extends React.Component<RenderEditorContainerProps> {
   editor: ?EventsSheetInterface;
@@ -89,15 +93,26 @@ export class EventsEditorContainer extends React.Component<RenderEditorContainer
     if (this.editor) this.editor.clearGlobalSearchResults();
   }
 
+  selectAllInsideEditor() {
+    if (this.editor) this.editor.selectAllEvents();
+  }
+
   forceUpdateEditor() {
     // No updates to be done.
   }
 
-  onEventsBasedObjectChildrenEdited() {
+  onEventsBasedObjectChildrenEdited(
+    eventsBasedObject: gdEventsBasedObject,
+    options?: {| editedObject?: ?gdObject, hasResourceChanged?: boolean |}
+  ) {
     // No thing to be done.
   }
 
-  onSceneObjectEdited(scene: gdLayout, objectWithContext: ObjectWithContext) {
+  onSceneObjectEdited(
+    scene: gdLayout,
+    objectWithContext: ObjectWithContext,
+    hasResourceChanged?: boolean
+  ) {
     // No thing to be done.
   }
 
@@ -129,6 +144,10 @@ export class EventsEditorContainer extends React.Component<RenderEditorContainer
     // No thing to be done.
   }
 
+  onWillDeleteObject(changes: WillDeleteObjectChanges) {
+    // No thing to be done.
+  }
+
   onObjectGroupsModifiedOutsideEditor(
     changes: ObjectGroupsOutsideEditorChanges
   ) {
@@ -154,11 +173,11 @@ export class EventsEditorContainer extends React.Component<RenderEditorContainer
     });
   };
 
-  onCreateEventsFunction = (
+  onCreateEventsFunction = async (
     extensionName: string,
     eventsFunction: gdEventsFunction
   ) => {
-    this.props.onCreateEventsFunction(
+    await this.props.onCreateEventsFunction(
       extensionName,
       eventsFunction,
       'scene-events-editor'
@@ -173,7 +192,7 @@ export class EventsEditorContainer extends React.Component<RenderEditorContainer
       return <div>No layout called {projectItemName} found!</div>;
     }
 
-    const scope = {
+    const scope: EventsScope = {
       project,
       layout,
     };
@@ -193,7 +212,6 @@ export class EventsEditorContainer extends React.Component<RenderEditorContainer
         onBeginCreateEventsFunction={this.onBeginCreateEventsFunction}
         unsavedChanges={this.props.unsavedChanges}
         project={project}
-        // $FlowFixMe[incompatible-type]
         scope={scope}
         globalObjectsContainer={project.getObjects()}
         objectsContainer={layout.getObjects()}
@@ -204,6 +222,9 @@ export class EventsEditorContainer extends React.Component<RenderEditorContainer
         hotReloadPreviewButtonProps={this.props.hotReloadPreviewButtonProps}
         onWillInstallExtension={this.props.onWillInstallExtension}
         onExtensionInstalled={this.props.onExtensionInstalled}
+        // Scene events don't have parameters nor properties
+        editEventsFunctionParameter={null}
+        openEventsBasedEntityPropertyEditorDialog={null}
       />
     );
   }
