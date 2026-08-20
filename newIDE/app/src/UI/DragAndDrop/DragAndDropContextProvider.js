@@ -2,10 +2,21 @@
 import * as React from 'react';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
+import { trackTouchGesturesForDrag } from './TouchDragDelay';
 
 const touchBackendOptions = {
-  delayTouchStart: 100,
+  // No delay before a drag can start: a touch move happening during this delay
+  // would cancel the drag for the whole gesture, and a finger always moves a
+  // bit while pressing. Instead, drags coming from a finger are delayed by
+  // `canDrag` (see TouchDragDelay), which leaves lists scrollable.
+  delayTouchStart: 0,
+  // Also handle mouse events so that Android Chrome's compatibility mouse
+  // events (fired after touch events) can trigger drags with no delay,
+  // making dragging feel instant on Android.
   enableMouseEvents: true,
+  // Android Chrome's long-press synthesizes hover mouse events ~1px off the
+  // touch position - without a slop, every long press starts a phantom drag.
+  touchSlop: 10,
 };
 
 type Props = {|
@@ -36,6 +47,11 @@ const DragAndDropContextProvider = ({
   // (can't be the body, the drag'n'drop events would not work).
   const rootElement = React.useMemo(
     () => (window ? window.document : undefined),
+    [window]
+  );
+
+  React.useEffect(
+    () => trackTouchGesturesForDrag(window ? window.document : document),
     [window]
   );
 

@@ -7,6 +7,7 @@ import PreferencesContext, {
   type AlertMessageIdentifier,
   type EditorStateForProject,
   type EditorStateForProjectUpdate,
+  type EditorStateForPropertyPanel,
 } from './PreferencesContext';
 import optionalRequire from '../../Utils/OptionalRequire';
 import { getIDEVersion } from '../../Version';
@@ -88,6 +89,7 @@ export const getInitialPreferences = (): {
   autoDisplayChangelog: boolean,
   autoDownloadUpdates: boolean,
   autoOpenMostRecentProject: boolean,
+  automaticallyApplyAiRequestEditsByProjectId: { [string]: boolean },
   automaticallyUseCreditsForAiRequests: boolean,
   autosaveOnPreview: boolean,
   backdropClickBehavior: string,
@@ -136,6 +138,7 @@ export const getInitialPreferences = (): {
   use3DEditor: any,
   useBackgroundSerializerForSaving: boolean,
   showJsTypeError: boolean,
+  canonicalEventSerialization: boolean,
   useGDJSDevelopmentWatcher: boolean,
   useShortcutToClosePreviewWindow: boolean,
   userShortcutMap: {},
@@ -401,11 +404,19 @@ export default class PreferencesProvider extends React.Component<Props, State> {
       this
     ): any),
     // $FlowFixMe[method-unbinding]
+    setAutomaticallyApplyAiRequestEditsForProjectId: (this._setAutomaticallyApplyAiRequestEditsForProjectId.bind(
+      this
+    ): any),
+    // $FlowFixMe[method-unbinding]
     setUseBackgroundSerializerForSaving: (this._setUseBackgroundSerializerForSaving.bind(
       this
     ): any),
     // $FlowFixMe[method-unbinding]
     setShowJsTypeError: (this._setShowJsTypeError.bind(this): any),
+    // $FlowFixMe[method-unbinding]
+    setCanonicalEventSerialization: (this._setCanonicalEventSerialization.bind(
+      this
+    ): any),
   };
 
   componentDidMount() {
@@ -1277,14 +1288,37 @@ export default class PreferencesProvider extends React.Component<Props, State> {
     );
   }
 
+  _setCanonicalEventSerialization(newValue: boolean) {
+    this.setState(
+      state => ({
+        values: { ...state.values, canonicalEventSerialization: newValue },
+      }),
+      () => this._persistValuesToLocalStorage(this.state)
+    );
+  }
+
   _getEditorStateForProject(projectId: string): any {
     const editorState = this.state.values.editorStateByProject[projectId];
     if (!editorState) return null;
 
+    const defaultState: EditorStateForPropertyPanel = {
+      scrollPosition: 0,
+      collapsedSections: {},
+    };
+    for (const panelType in editorState.propertiesPanel) {
+      const states = editorState.propertiesPanel[panelType];
+      for (const id in states) {
+        states[id] = {
+          ...defaultState,
+          ...states[id],
+        };
+      }
+    }
+
     return {
       editorTabs:
         editorState.editorTabs == null ? null : editorState.editorTabs,
-      propertiesPanelScroll: editorState.propertiesPanelScroll || {},
+      propertiesPanel: editorState.propertiesPanel || {},
     };
   }
 
@@ -1305,7 +1339,7 @@ export default class PreferencesProvider extends React.Component<Props, State> {
             projectId
           ] || {
             editorTabs: null,
-            propertiesPanelScroll: {},
+            propertiesPanel: {},
           };
           const mergedEditorState: EditorStateForProject = {
             ...previousEditorState,
@@ -1392,6 +1426,24 @@ export default class PreferencesProvider extends React.Component<Props, State> {
         values: {
           ...state.values,
           automaticallyUseCreditsForAiRequests: newValue,
+        },
+      }),
+      () => this._persistValuesToLocalStorage(this.state)
+    );
+  }
+
+  _setAutomaticallyApplyAiRequestEditsForProjectId(
+    projectId: string,
+    newValue: boolean
+  ) {
+    this.setState(
+      state => ({
+        values: {
+          ...state.values,
+          automaticallyApplyAiRequestEditsByProjectId: {
+            ...state.values.automaticallyApplyAiRequestEditsByProjectId,
+            [projectId]: newValue,
+          },
         },
       }),
       () => this._persistValuesToLocalStorage(this.state)

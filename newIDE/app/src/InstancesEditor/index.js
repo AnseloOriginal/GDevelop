@@ -7,6 +7,7 @@ import InstancesRenderer from './InstancesRenderer';
 import ViewPosition from './ViewPosition';
 import SelectedInstances from './SelectedInstances';
 import HighlightedInstance from './HighlightedInstance';
+import HiddenInstancesDecorations from './HiddenInstancesDecorations';
 import SelectionRectangle from './SelectionRectangle';
 import InstancesResizer, {
   type ResizeGrabbingLocation,
@@ -93,6 +94,7 @@ export type InstancesEditorShortcutsCallbacks = {|
   onShift1: () => void,
   onShift2: () => void,
   onShift3: () => void,
+  onFocusOnSelection: () => void,
 |};
 
 export type InstancesEditorPropsWithoutSizeAndScroll = {|
@@ -154,8 +156,7 @@ export default class InstancesEditor extends Component<Props, State> {
   lastContextMenuY = 0;
   lastCursorX: number | null = null;
   lastCursorY: number | null = null;
-  // $FlowFixMe[missing-local-annot]
-  fpsLimiter = (new FpsLimiter({ maxFps: 60, idleFps: 10 }): FpsLimiter);
+  fpsLimiter: FpsLimiter = new FpsLimiter({ maxFps: 60, idleFps: 10 });
   canvasArea: ?HTMLDivElement;
   // $FlowFixMe[value-as-type]
   pixiRenderer: PIXI.Renderer;
@@ -170,6 +171,7 @@ export default class InstancesEditor extends Component<Props, State> {
   tileMapPaintingPreview: TileMapPaintingPreview;
   clickInterceptor: ClickInterceptor;
   highlightedInstance: HighlightedInstance;
+  hiddenInstancesDecorations: HiddenInstancesDecorations;
   instancesResizer: InstancesResizer;
   instancesRotator: InstancesRotator;
   instancesMover: InstancesMover;
@@ -196,8 +198,7 @@ export default class InstancesEditor extends Component<Props, State> {
   _showObjectInstancesIn3D: boolean = false;
   _previousToolBeforePicker: ?TileMapTileSelection = null;
 
-  // $FlowFixMe[missing-local-annot]
-  state = {
+  state: State = {
     renderingError: null,
   };
 
@@ -495,6 +496,12 @@ export default class InstancesEditor extends Component<Props, State> {
         this.highlightedInstance.getPixiObject()
       );
     }
+    if (this.hiddenInstancesDecorations) {
+      this.uiPixiContainer.removeChild(
+        this.hiddenInstancesDecorations.getPixiObject()
+      );
+      this.hiddenInstancesDecorations.delete();
+    }
     if (this.tileMapPaintingPreview) {
       this.uiPixiContainer.removeChild(
         this.tileMapPaintingPreview.getPixiObject()
@@ -597,6 +604,12 @@ export default class InstancesEditor extends Component<Props, State> {
       toCanvasCoordinates: this.viewPosition.toCanvasCoordinates,
       isInstanceOf3DObject: this.props.isInstanceOf3DObject,
     });
+    this.hiddenInstancesDecorations = new HiddenInstancesDecorations({
+      instances: props.initialInstances,
+      layersContainer: props.layersContainer,
+      instanceMeasurer: this.instancesRenderer.getInstanceMeasurer(),
+      toCanvasCoordinates: this.viewPosition.toCanvasCoordinates,
+    });
     this.instancesResizer = new InstancesResizer({
       instanceMeasurer: this.instancesRenderer.getInstanceMeasurer(),
       instancesEditorSettings: this.props.instancesEditorSettings,
@@ -632,6 +645,9 @@ export default class InstancesEditor extends Component<Props, State> {
     this.uiPixiContainer.addChild(this.windowMask.getPixiObject());
     this.uiPixiContainer.addChild(this.selectedInstances.getPixiContainer());
     this.uiPixiContainer.addChild(this.highlightedInstance.getPixiObject());
+    this.uiPixiContainer.addChild(
+      this.hiddenInstancesDecorations.getPixiObject()
+    );
     this.uiPixiContainer.addChild(this.tileMapPaintingPreview.getPixiObject());
     this.uiPixiContainer.addChild(this.clickInterceptor.getPixiObject());
     this.uiPixiContainer.addChild(this.statusBar.getPixiObject());
@@ -654,6 +670,9 @@ export default class InstancesEditor extends Component<Props, State> {
     // by security, check that they are defined before deleting them.
     if (this.selectionRectangle) {
       this.selectionRectangle.delete();
+    }
+    if (this.hiddenInstancesDecorations) {
+      this.hiddenInstancesDecorations.delete();
     }
     if (this.instancesRenderer) {
       this.instancesRenderer.delete();
@@ -1581,6 +1600,36 @@ export default class InstancesEditor extends Component<Props, State> {
     this.highlightedInstance.setInstance(null);
   };
 
+  /**
+   * Delete the temporary instances added while an object is dragged - ensuring
+   * no reference to it is kept.
+   */
+  _deleteTemporaryInstances = () => {
+    // A temporary instance can be the highlighted one (it gets highlighted on
+    // hover while being dragged over the canvas). Clear the reference before
+    // it's deleted, otherwise the rendering would read the freed instance and
+    // show a corrupted tooltip and a "phantom" default-texture instance.
+    if (
+      this._instancesAdder.isTemporaryInstance(
+        this.highlightedInstance.getInstance()
+      )
+    ) {
+      this.highlightedInstance.setInstance(null);
+    }
+    // Out of caution: a temporary instance is not expected to be selected
+    // (selection only happens on a click on the canvas), but make sure the
+    // selection never keeps a reference to a soon-to-be-freed instance.
+    this.props.instancesSelection
+      .getSelectedInstances()
+      .slice()
+      .forEach(instance => {
+        if (this._instancesAdder.isTemporaryInstance(instance)) {
+          this.props.instancesSelection.unselectInstance(instance);
+        }
+      });
+    this._instancesAdder.deleteTemporaryInstances();
+  };
+
   // Debounce function to avoid storing history for each pixel move when user
   // keeps pressing an arrow key.
   // $FlowFixMe[missing-local-annot]
@@ -1777,6 +1826,7 @@ export default class InstancesEditor extends Component<Props, State> {
         this.canvasCursor.render();
         this.grid.render();
         this.highlightedInstance.render();
+        this.hiddenInstancesDecorations.render();
         this.tileMapPaintingPreview.render();
         this.clickInterceptor.render();
         this.selectedInstances.render();
@@ -1896,7 +1946,7 @@ export default class InstancesEditor extends Component<Props, State> {
           if (monitor.didDrop()) {
             // Drop was done somewhere else (in a child of the canvas:
             // should not happen, but still handling this case).
-            _instancesAdder.deleteTemporaryInstances();
+            this._deleteTemporaryInstances();
             return;
           }
 
@@ -1918,7 +1968,7 @@ export default class InstancesEditor extends Component<Props, State> {
           // take this opportunity to delete any temporary instances
           // if the dragging is not done anymore over the canvas.
           if (this._instancesAdder && !isOver) {
-            this._instancesAdder.deleteTemporaryInstances();
+            this._deleteTemporaryInstances();
           }
 
           return connectDropTarget(

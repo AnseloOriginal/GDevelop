@@ -245,6 +245,12 @@ export default class Window {
     return remote.getCurrentWindow().on('close', cb);
   }
 
+  /** True when the app was launched with `--run-command` (CLI / CI mode). */
+  static isRunningCommandFromCli(): boolean {
+    const args = Window.getArguments();
+    return !!args['run-command'];
+  }
+
   /**
    * Return the arguments passed to the IDE, either from Electron
    * or from the web-app URL. The resulting object will have a key "_"
@@ -437,9 +443,16 @@ export default class Window {
   }
 
   static isDev(): boolean {
-    if (!electron || !remote)
-      // $FlowFixMe[cannot-resolve-name]
-      return !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+    if (!electron || !remote) {
+      return (
+        // $FlowFixMe[cannot-resolve-name]
+        !process.env.NODE_ENV ||
+        // $FlowFixMe[cannot-resolve-name]
+        process.env.NODE_ENV === 'development' ||
+        // $FlowFixMe[cannot-resolve-name]
+        process.env.REACT_APP_ENV === 'development' // Added manually in the .env as we cannot override NODE_ENV with react-scripts.
+      );
+    }
 
     try {
       const isDev = remote.require('electron-is-dev');

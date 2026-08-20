@@ -13,6 +13,8 @@ import {
   initializeCompletions,
   enableJsTypeDiagnostics,
   applyElectronClipboardPatch,
+  suppressDiagnosticsMessagesForModel,
+  unsuppressDiagnosticsMessagesForModel,
   baseEditorOptions,
 } from './MonacoSetup';
 
@@ -36,6 +38,13 @@ export type Props = {|
   onEditorMounted?: () => void,
   onFocus: () => void,
   onBlur: () => void,
+  /**
+   * Diagnostics whose message contains one of these texts are not shown
+   * in this editor. Useful when the code is run in a way the TypeScript
+   * language service can not know about (a gameplay test, for example, is
+   * run inside an async function, so top-level `await` is allowed).
+   */
+  suppressedDiagnosticsMessages?: Array<string>,
 |};
 
 export const CodeEditor = ({
@@ -50,6 +59,7 @@ export const CodeEditor = ({
   onEditorMounted,
   onFocus,
   onBlur,
+  suppressedDiagnosticsMessages,
 }: Props): React.Node => {
   const [MonacoEditor, setMonacoEditor] = React.useState<any>(null);
   const [error, setError] = React.useState<Error | null>(null);
@@ -84,6 +94,13 @@ export const CodeEditor = ({
       if (preferences.showJsTypeError) {
         enableJsTypeDiagnostics(monaco);
       }
+      if (suppressedDiagnosticsMessages) {
+        suppressDiagnosticsMessagesForModel(
+          monaco,
+          editor.getModel(),
+          suppressedDiagnosticsMessages
+        );
+      }
 
       editor.setScrollTop(initialScrollTop);
       editor.setPosition({
@@ -101,6 +118,7 @@ export const CodeEditor = ({
       preferences.showJsTypeError,
       setUpEditorFocus,
       setUpSaveOnEditorBlur,
+      suppressedDiagnosticsMessages,
     ]
   );
 
@@ -148,6 +166,7 @@ export const CodeEditor = ({
         cursorColumn: cursorPosition.column,
         cursorLine: cursorPosition.lineNumber,
       });
+      unsuppressDiagnosticsMessagesForModel(monaco, editor.getModel());
     },
     [saveEditorState]
   );
@@ -176,6 +195,7 @@ export const CodeEditor = ({
         onEditorMounted={onEditorMounted}
         onFocus={onFocus}
         onBlur={onBlur}
+        suppressedDiagnosticsMessages={suppressedDiagnosticsMessages}
       />
     );
   }
@@ -192,7 +212,16 @@ export const CodeEditor = ({
   }
 
   if (!MonacoEditor) {
-    return <PlaceholderLoader />;
+    // Reserve the same dimensions as the editor that will replace this loader,
+    // so that the surrounding container keeps a stable height while Monaco is
+    // being loaded asynchronously. Without this, the height would grow once the
+    // editor mounts, which - in the events sheet - reports a new event height
+    // and makes the virtualized list jump the scroll position.
+    return (
+      <div style={{ width: width || 600, height: height || 200 }}>
+        <PlaceholderLoader />
+      </div>
+    );
   }
 
   return (

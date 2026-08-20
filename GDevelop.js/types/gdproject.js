@@ -56,6 +56,7 @@ declare class gdProject {
   getUseDeprecatedZeroAsDefaultStringVariable(): boolean;
   areEffectsHiddenInEditor(): boolean;
   setEffectsHiddenInEditor(enable: boolean): void;
+  getInitialGDVersion(): string;
   setLastCompilationDirectory(path: string): void;
   getLastCompilationDirectory(): string;
   getExtensionProperties(): gdExtensionProperties;
@@ -74,6 +75,8 @@ declare class gdProject {
   removeLayout(name: string): void;
   setFirstLayout(name: string): void;
   getFirstLayout(): string;
+  setPreviewLayout(name: string): void;
+  getPreviewLayout(): string;
   getLayoutPosition(name: string): number;
   hasExternalEventsNamed(name: string): boolean;
   getExternalEvents(name: string): gdExternalEvents;
@@ -84,6 +87,7 @@ declare class gdProject {
   insertNewExternalEvents(name: string, position: number): gdExternalEvents;
   removeExternalEvents(name: string): void;
   getExternalEventsPosition(name: string): number;
+  getTests(): gdTestsContainer;
   hasExternalLayoutNamed(name: string): boolean;
   getExternalLayout(name: string): gdExternalLayout;
   getExternalLayoutAt(index: number): gdExternalLayout;

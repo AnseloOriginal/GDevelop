@@ -240,6 +240,9 @@ namespace gdjs {
      */
     _hasJustResumed: boolean = false;
 
+    /** True as soon as the game startup began - see `hasGameStartupBegun`. */
+    _hasGameStartupBegun: boolean = false;
+
     //Inputs :
     private _inputManager: InputManager;
 
@@ -917,26 +920,32 @@ namespace gdjs {
     /**
      * Preload an object assets in background.
      */
-    loadObjectOrGroupAssets(objectOrGroupName: string): void {
+    loadObjectOrGroupAssets(
+      objectOrGroupName: string,
+      sceneName?: string
+    ): void {
       const currentScene = this._sceneStack.getCurrentScene();
       if (!currentScene) {
         return;
       }
+      if (!sceneName) {
+        sceneName = currentScene.getName();
+      }
       const objectGroupData = this.getObjectGroupData(
-        currentScene.getName(),
+        sceneName,
         objectOrGroupName
       );
       if (objectGroupData) {
         for (const object of objectGroupData.objects) {
-          this._loadObjectAssets(currentScene, object.name);
+          this._loadObjectAssets(sceneName, object.name);
         }
       } else {
-        this._loadObjectAssets(currentScene, objectOrGroupName);
+        this._loadObjectAssets(sceneName, objectOrGroupName);
       }
     }
 
-    private _loadObjectAssets(currentScene: RuntimeScene, objectName: string) {
-      const objectData = currentScene._objects.get(objectName);
+    private _loadObjectAssets(sceneName: string, objectName: string) {
+      const objectData = this.getObjectData(sceneName, objectName);
       if (!objectData) {
         return;
       }
@@ -945,7 +954,7 @@ namespace gdjs {
         return;
       }
       this._resourcesLoader.loadObjectResources(
-        currentScene.getName(),
+        sceneName,
         objectName,
         usedResources
       );
@@ -954,22 +963,25 @@ namespace gdjs {
     /**
      * @returns true when all the resources of the given object are loaded.
      */
-    areObjectOrGroupAssetsLoaded(objectOrGroupName: string): boolean {
+    areObjectOrGroupAssetsLoaded(
+      objectOrGroupName: string,
+      sceneName?: string
+    ): boolean {
       const currentScene = this._sceneStack.getCurrentScene();
       if (!currentScene) {
         return false;
       }
+      if (!sceneName) {
+        sceneName = currentScene.getName();
+      }
       const objectGroupData = this.getObjectGroupData(
-        currentScene.getName(),
+        sceneName,
         objectOrGroupName
       );
       if (objectGroupData) {
         for (const object of objectGroupData.objects) {
           if (
-            !this._resourcesLoader.areObjectAssetsReady(
-              currentScene.getName(),
-              object.name
-            )
+            !this._resourcesLoader.areObjectAssetsReady(sceneName, object.name)
           ) {
             return false;
           }
@@ -977,7 +989,7 @@ namespace gdjs {
         return true;
       }
       return this._resourcesLoader.areObjectAssetsReady(
-        currentScene.getName(),
+        sceneName,
         objectOrGroupName
       );
     }
@@ -985,28 +997,46 @@ namespace gdjs {
     /**
      * Unload an object assets.
      */
-    unloadObjectOrGroupAssets(objectOrGroupName: string): void {
+    unloadObjectOrGroupAssets(
+      objectOrGroupName: string,
+      sceneName?: string
+    ): void {
       const currentScene = this._sceneStack.getCurrentScene();
       if (!currentScene) {
         return;
       }
+      if (!sceneName) {
+        sceneName = currentScene.getName();
+      }
       const objectGroupData = this.getObjectGroupData(
-        currentScene.getName(),
+        sceneName,
         objectOrGroupName
       );
       if (objectGroupData) {
         for (const object of objectGroupData.objects) {
-          this._resourcesLoader.unloadObjectResources(
-            currentScene.getName(),
-            object.name
-          );
+          this._resourcesLoader.unloadObjectResources(sceneName, object.name);
         }
       } else {
         this._resourcesLoader.unloadObjectResources(
-          currentScene.getName(),
+          sceneName,
           objectOrGroupName
         );
       }
+    }
+
+    private getObjectData(
+      sceneName: string,
+      objectName: string
+    ): ObjectData | null {
+      const sceneData = this.getSceneData(sceneName);
+      if (sceneData) {
+        for (const objectData of sceneData.objects) {
+          if (objectData.name === objectName) {
+            return objectData;
+          }
+        }
+      }
+      return null;
     }
 
     private getObjectGroupData(
@@ -1015,9 +1045,9 @@ namespace gdjs {
     ): ObjectGroupData | null {
       const sceneData = this.getSceneData(sceneName);
       if (sceneData) {
-        for (const objectGroup of sceneData.objectsGroups) {
-          if (objectGroup.name === objectGroupName) {
-            return objectGroup;
+        for (const objectGroupData of sceneData.objectsGroups) {
+          if (objectGroupData.name === objectGroupName) {
+            return objectGroupData;
           }
         }
       }
@@ -1073,6 +1103,19 @@ namespace gdjs {
     }
 
     /**
+     * True while the game is in its startup sequence: the initial loading
+     * (`loadAllAssets` - assets and asynchronously loaded libraries) has
+     * begun but the first scene (created by `startGameLoop` at the end of
+     * it) does not exist yet. Always false for a game that is never
+     * started and only driven manually (as in tests).
+     */
+    isStartingUp(): boolean {
+      return (
+        this._hasGameStartupBegun && !this._sceneStack.wasFirstSceneLoaded()
+      );
+    }
+
+    /**
      * Load all assets needed to display the 1st scene, displaying progress in
      * renderer.
      */
@@ -1098,6 +1141,7 @@ namespace gdjs {
       firstSceneName: string,
       progressCallback?: (progress: float) => void
     ): Promise<void> {
+      this._hasGameStartupBegun = true;
       try {
         // Download the loading screen background image first to be able to
         // display the loading screen as soon as possible.
@@ -1130,7 +1174,8 @@ namespace gdjs {
           gdjs.getAllAsynchronouslyLoadingLibraryPromise(),
         ]);
       } catch (e) {
-        if (this._debuggerClient) this._debuggerClient.onUncaughtException(e);
+        if (this._debuggerClient)
+          this._debuggerClient.onUncaughtException(e as Error);
 
         throw e;
       }
@@ -1165,6 +1210,10 @@ namespace gdjs {
       ) => Promise<void>,
       progressCallback?: (progress: float) => void
     ): Promise<void> {
+      // Remember if the game was already paused (e.g. by a gameplay test or
+      // the debugger), to restore that state - not blindly unpause - once
+      // the assets are loaded.
+      const wasPaused = this._paused;
       this.pause(true);
       const loadingScreen = new gdjs.LoadingScreenRenderer(
         this.getRenderer(),
@@ -1193,7 +1242,7 @@ namespace gdjs {
 
       this._displayedLoadingScreen = null;
       if (!this._isInGameEdition) {
-        this.pause(false);
+        this.pause(wasPaused);
       }
     }
 
@@ -1361,7 +1410,7 @@ namespace gdjs {
             return true;
           } catch (e) {
             if (this._debuggerClient)
-              this._debuggerClient.onUncaughtException(e);
+              this._debuggerClient.onUncaughtException(e as Error);
 
             throw e;
           }
@@ -1373,7 +1422,8 @@ namespace gdjs {
           this._captureManager.setupCaptureOptions(this._isPreview);
         }
       } catch (e) {
-        if (this._debuggerClient) this._debuggerClient.onUncaughtException(e);
+        if (this._debuggerClient)
+          this._debuggerClient.onUncaughtException(e as Error);
 
         throw e;
       }

@@ -334,14 +334,15 @@ namespace gdjs {
             this._runtimeGame
           );
         }
-      } catch (error) {
-        const errorTarget = error.target;
+      } catch (e) {
+        const errorTarget = (e as ErrorEvent).target;
         if (errorTarget instanceof HTMLScriptElement) {
           this._logs.push({
             kind: 'fatal',
             message: 'Unable to reload script: ' + errorTarget.src,
           });
         } else {
+          const error = e as Error;
           this._logs.push({
             kind: 'fatal',
             message:
@@ -1854,6 +1855,15 @@ namespace gdjs {
       }
       if (oldInstance.layer !== newInstance.layer) {
         runtimeObject.setLayer(newInstance.layer);
+        somethingChanged = true;
+      }
+      if (
+        // Instances hidden at start are not hidden in the in-game editor:
+        // they must stay visible to be seen and manipulated.
+        !this._runtimeGame.isInGameEdition() &&
+        !oldInstance.hidden !== !newInstance.hidden
+      ) {
+        runtimeObject.hide(!!newInstance.hidden);
         somethingChanged = true;
       }
       if (gdjs.Base3DHandler && gdjs.Base3DHandler.is3D(runtimeObject)) {

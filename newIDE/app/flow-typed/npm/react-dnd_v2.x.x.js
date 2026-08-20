@@ -190,11 +190,6 @@ declare module "react-dnd" {
     ...
   };
 
-  declare function DragLayer<OP: {...}, CP: {...}>(
-    collect: (monitor: DragLayerMonitor) => CP,
-    options?: DndOptions<OP>
-  ): Connector<$Shape<OP & CP>, CP>;
-
   // DndProvider (v14+)
   // ----------------------------------------------------------------------
 
@@ -206,4 +201,28 @@ declare module "react-dnd" {
   };
 
   declare var DndProvider: React$ComponentType<DndProviderProps>;
+
+  // useDragDropManager (v11+)
+  // ----------------------------------------------------------------------
+
+  declare type DragDropMonitor = {
+    isDragging(): boolean,
+    getClientOffset(): ClientOffset | null,
+    ...
+  };
+
+  declare type DragDropActions = {
+    endDrag(): void,
+    ...
+  };
+
+  declare type DragDropManager = {
+    getMonitor(): DragDropMonitor,
+    getActions(): DragDropActions,
+    ...
+  };
+
+  declare function useDragDropManager(): DragDropManager;
+
+  declare function useDragLayer<T>(collect: (monitor: DragLayerMonitor) => T): T;
 }

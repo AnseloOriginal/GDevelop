@@ -13,7 +13,7 @@ import Welcome from './Welcome';
 import HelpButton from '../UI/HelpButton';
 import HelpIcon from '../UI/HelpIcon';
 import AboutDialog from '../MainFrame/AboutDialog';
-import DragHandle from '../UI/DragHandle';
+import { DragHandleIcon } from '../UI/DragHandle';
 import Background from '../UI/Background';
 import LocalFolderPicker from '../UI/LocalFolderPicker';
 import LocalFilePicker from '../UI/LocalFilePicker';
@@ -721,7 +721,7 @@ storiesOf('UI Building Blocks/PlaceholderLoader', module)
 // $FlowFixMe[invalid-export]
 storiesOf('UI Building Blocks/DragHandle', module)
   .addDecorator(paperDecorator)
-  .add('default', () => <DragHandle />);
+  .add('default', () => <DragHandleIcon />);
 
 // $FlowFixMe[invalid-export]
 storiesOf('UI Building Blocks/EmptyMessage', module)
@@ -948,7 +948,7 @@ storiesOf('PropertiesEditor', module)
         {
           name: 'Object name',
           valueType: 'string',
-          disabled: () => true,
+          disabled: () => 'always',
           getValue: instance => 'Disabled field',
           setValue: (instance, newValue) => {},
         },
@@ -1014,7 +1014,7 @@ storiesOf('PropertiesEditor', module)
         {
           name: 'Object name',
           valueType: 'string',
-          disabled: () => true,
+          disabled: () => 'always',
           getValue: instance => 'Disabled field',
           setValue: (instance, newValue) => {},
           getDescription: () =>
@@ -1874,26 +1874,30 @@ storiesOf('ExternalPropertiesDialog', module)
 // $FlowFixMe[invalid-export]
 storiesOf('EventsSheet/EventsFunctionExtractorDialog', module)
   .add('default', () => (
-    <EventsFunctionExtractorDialog
-      project={testProject.project}
-      scope={{ project: testProject.project, layout: testProject.testLayout }}
-      globalObjectsContainer={testProject.project.getObjects()}
-      objectsContainer={testProject.testLayout.getObjects()}
-      serializedEvents={testProject.testSerializedEvents}
-      onClose={action('close')}
-      onCreate={action('create')}
-    />
+    <DragAndDropContextProvider>
+      <EventsFunctionExtractorDialog
+        project={testProject.project}
+        scope={{ project: testProject.project, layout: testProject.testLayout }}
+        globalObjectsContainer={testProject.project.getObjects()}
+        objectsContainer={testProject.testLayout.getObjects()}
+        serializedEvents={testProject.testSerializedEvents}
+        onClose={action('close')}
+        onCreate={action('create')}
+      />
+    </DragAndDropContextProvider>
   ))
   .add('with a lot of parameters', () => (
-    <EventsFunctionExtractorDialog
-      project={testProject.project}
-      scope={{ project: testProject.project, layout: testProject.testLayout }}
-      globalObjectsContainer={testProject.project.getObjects()}
-      objectsContainer={testProject.testLayout.getObjects()}
-      serializedEvents={testProject.testSerializedEventsWithLotsOfObjects}
-      onClose={action('close')}
-      onCreate={action('create')}
-    />
+    <DragAndDropContextProvider>
+      <EventsFunctionExtractorDialog
+        project={testProject.project}
+        scope={{ project: testProject.project, layout: testProject.testLayout }}
+        globalObjectsContainer={testProject.project.getObjects()}
+        objectsContainer={testProject.testLayout.getObjects()}
+        serializedEvents={testProject.testSerializedEventsWithLotsOfObjects}
+        onClose={action('close')}
+        onCreate={action('create')}
+      />
+    </DragAndDropContextProvider>
   ));
 
 // $FlowFixMe[invalid-export]
@@ -1979,7 +1983,7 @@ storiesOf('InstructionOrObjectSelector', module)
                 chosenObjectName={null}
                 onChooseObject={action('choose object')}
                 focusOnMount
-                onClickMore={action('See new behaviors')}
+                onOpenExtensionStore={action('See new extensions')}
                 i18n={i18n}
               />
             </FixedHeightFlexContainer>
@@ -2013,7 +2017,7 @@ storiesOf('InstructionOrObjectSelector', module)
                 chosenObjectName={'MySpriteObject'}
                 onChooseObject={action('choose object')}
                 focusOnMount
-                onClickMore={action('See new behaviors')}
+                onOpenExtensionStore={action('See new extensions')}
                 i18n={i18n}
               />
             </FixedHeightFlexContainer>
@@ -2053,6 +2057,13 @@ storiesOf('InstructionEditorDialog', module)
           onPasteInstructions={action('paste instructions')}
           onWillInstallExtension={action('extension will be installed')}
           onExtensionInstalled={action('extension installed')}
+          onCreateNewExtensionWithBehavior={action(
+            'onCreateNewExtensionWithBehavior'
+          )}
+          editEventsFunctionParameter={action('editEventsFunctionParameter')}
+          openEventsBasedEntityPropertyEditorDialog={action(
+            'openEventsBasedEntityPropertyEditorDialog'
+          )}
         />
       )}
     </I18n>
@@ -2081,6 +2092,13 @@ storiesOf('InstructionEditorDialog', module)
           onPasteInstructions={action('paste instructions')}
           onWillInstallExtension={action('extension will be installed')}
           onExtensionInstalled={action('extension installed')}
+          onCreateNewExtensionWithBehavior={action(
+            'onCreateNewExtensionWithBehavior'
+          )}
+          editEventsFunctionParameter={action('editEventsFunctionParameter')}
+          openEventsBasedEntityPropertyEditorDialog={action(
+            'openEventsBasedEntityPropertyEditorDialog'
+          )}
         />
       )}
     </I18n>
@@ -2118,6 +2136,13 @@ storiesOf('InstructionEditorDialog', module)
             onPasteInstructions={action('paste instructions')}
             onWillInstallExtension={action('extension will be installed')}
             onExtensionInstalled={action('extension installed')}
+            onCreateNewExtensionWithBehavior={action(
+              'onCreateNewExtensionWithBehavior'
+            )}
+            editEventsFunctionParameter={action('editEventsFunctionParameter')}
+            openEventsBasedEntityPropertyEditorDialog={action(
+              'openEventsBasedEntityPropertyEditorDialog'
+            )}
           />
         )}
       </I18n>
@@ -2166,6 +2191,15 @@ storiesOf('InstructionEditorMenu', module)
                 onPasteInstructions={action('paste instructions')}
                 onWillInstallExtension={action('extension will be installed')}
                 onExtensionInstalled={action('extension installed')}
+                onCreateNewExtensionWithBehavior={action(
+                  'onCreateNewExtensionWithBehavior'
+                )}
+                editEventsFunctionParameter={action(
+                  'editEventsFunctionParameter'
+                )}
+                openEventsBasedEntityPropertyEditorDialog={action(
+                  'openEventsBasedEntityPropertyEditorDialog'
+                )}
               />
             )}
           </I18n>

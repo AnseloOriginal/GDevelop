@@ -181,7 +181,16 @@ export type User = {|
   +password?: ?string,
 |};
 
-export type Team = {| id: string, createdAt: number, seats: number |};
+export type Team = {|
+  id: string,
+  createdAt: number,
+  seats: number,
+  /**
+   * Overrides applied to the `classrooms` capability of the students of this
+   * team. Keys mirror the `classrooms` capability of the limits.
+   */
+  classrooms?: ?{| hideAskAi: boolean |},
+|};
 export type TeamGroup = {| id: string, name: string |};
 export type TeamInvitation = {|
   teamId: string,
@@ -345,6 +354,24 @@ export const updateGroup = async (
   });
 };
 
+export const updateTeam = async (
+  getAuthorizationHeader: () => Promise<string>,
+  userId: string,
+  teamId: string,
+  attributes: {| classrooms: {| hideAskAi: boolean |} |}
+): Promise<Team> => {
+  const authorizationHeader = await getAuthorizationHeader();
+  const response = await client.patch(`/team/${teamId}`, attributes, {
+    headers: { Authorization: authorizationHeader },
+    params: { userId },
+  });
+  return ensureObjectHasProperty({
+    data: response.data,
+    propertyName: 'id',
+    endpointName: '/team/{id} of User API',
+  });
+};
+
 export const createGroup = async (
   getAuthorizationHeader: () => Promise<string>,
   userId: string,
@@ -407,9 +434,11 @@ export const updateUserGroup = async (
   teamId: string,
   groupId: string,
   userId: string
-): Promise<Array<TeamGroup>> => {
+): Promise<void> => {
   const authorizationHeader = await getAuthorizationHeader();
-  const response = await client.post(
+  // The endpoint responds with a simple 'OK' string, so don't try
+  // to validate the response content.
+  await client.post(
     `/team/${teamId}/action/update-members`,
     [{ groupId, userId }],
     {
@@ -417,10 +446,6 @@ export const updateUserGroup = async (
       params: { userId: adminUserId },
     }
   );
-  return ensureIsArray({
-    data: response.data,
-    endpointName: '/team/{id}/action/update-members of User API',
-  });
 };
 
 export const getUserPublicProfilesByIds = async (
@@ -637,6 +662,21 @@ export const syncDiscordUsername = async (
   const authorizationHeader = await getAuthorizationHeader();
   await client.post(
     `/user/${userId}/action/update-discord-role`,
+    {},
+    {
+      headers: { Authorization: authorizationHeader },
+      params: { userId },
+    }
+  );
+};
+
+export const syncForumGroup = async (
+  getAuthorizationHeader: () => Promise<string>,
+  userId: string
+): Promise<void> => {
+  const authorizationHeader = await getAuthorizationHeader();
+  await client.post(
+    `/user/${userId}/action/update-discourse-group`,
     {},
     {
       headers: { Authorization: authorizationHeader },

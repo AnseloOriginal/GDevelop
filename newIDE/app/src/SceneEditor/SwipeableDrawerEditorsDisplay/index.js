@@ -82,6 +82,7 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
       initialInstances,
       chosenLayer,
       selectedLayer,
+      selectedObjectGroup,
       onSelectInstances,
       onInstancesModified,
 
@@ -462,6 +463,7 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
                         onUpdateBehaviorsSharedData={updateBehaviorsSharedData}
                         objectsContainer={objectsContainer}
                         globalObjectsContainer={globalObjectsContainer}
+                        initialInstances={initialInstances}
                         layersContainer={layersContainer}
                         projectScopedContainersAccessor={
                           projectScopedContainersAccessor
@@ -469,11 +471,13 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
                         objects={selectedObjects}
                         instances={selectedInstances}
                         layer={selectedLayer}
+                        objectGroup={selectedObjectGroup}
                         editInstanceVariables={props.editInstanceVariables}
                         editObjectInPropertiesPanel={
                           props.editObjectInPropertiesPanel
                         }
                         onEditObject={props.onEditObject}
+                        onEditObjectGroup={props.onEditObjectGroup}
                         onObjectsModified={props.onObjectsModified}
                         onEffectAdded={props.onEffectAdded}
                         onInstancesModified={forceUpdateInstancesList}
@@ -485,6 +489,9 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
                         lastSelectionType={props.lastSelectionType}
                         onWillInstallExtension={props.onWillInstallExtension}
                         onExtensionInstalled={props.onExtensionInstalled}
+                        onCreateNewExtensionWithBehavior={
+                          props.onCreateNewExtensionWithBehavior
+                        }
                         onOpenEventBasedObjectVariantEditor={
                           props.onOpenEventBasedObjectVariantEditor
                         }
@@ -493,6 +500,7 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
                         }
                         isVariableListLocked={isCustomVariant}
                         isBehaviorListLocked={isCustomVariant}
+                        isObjectGroupObjectListLocked={isCustomVariant}
                         onEditLayerEffects={props.editLayerEffects}
                         onEditLayer={props.editLayer}
                         onLayersModified={props.onLayersModified}
@@ -508,6 +516,10 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
                         onEventsBasedObjectChildrenEdited={
                           props.onEventsBasedObjectChildrenEdited
                         }
+                        onBackgroundColorChanged={
+                          props.onBackgroundColorChanged
+                        }
+                        openSceneVariables={props.openSceneVariables}
                       />
                     )}
                   </I18n>
@@ -525,6 +537,8 @@ const SwipeableDrawerEditorsDisplay: React.ComponentType<{
                           projectScopedContainersAccessor
                         }
                         objectGroups={objectsContainer.getObjectGroups()}
+                        selectedObjectGroup={props.selectedObjectGroup}
+                        onSelectObjectGroup={props.onSelectObjectGroup}
                         onCreateGroup={props.onCreateObjectGroup}
                         onEditGroup={props.onEditObjectGroup}
                         onDeleteGroup={props.onDeleteObjectGroup}
